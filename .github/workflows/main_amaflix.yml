@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy ASP app to Azure Web App - amaflix
+name: Deploy Static Content to Azure Web App - amaflix
 
 on:
   push:
@@ -10,49 +10,21 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  deploy_static: # Simplified job name, as no 'build' is needed for static files
     runs-on: windows-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      id-token: write # This is required for requesting the JWT
+      contents: read # This is required for actions/checkout
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Setup MSBuild path
-        uses: microsoft/setup-msbuild@v1.0.2
-
-      - name: Setup NuGet
-        uses: NuGet/setup-nuget@v1.0.5
-
-      - name: Restore NuGet packages
-        run: nuget restore
-
-      - name: Publish to folder
-        run: msbuild /nologo /verbosity:m /t:Build /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir="\published\"
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: ASP-app
-          path: '/published/**'
-
-  deploy:
-    runs-on: windows-latest
-    needs: build
-    permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: ASP-app
-      
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_298C2E7162DF4DD2BA0D81B89F2ABACF }}
+          # Use your existing secrets for secure login
+		  client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_298C2E7162DF4DD2BA0D81B89F2ABACF }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0AED9C35CC274B55851F99992015E113 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_50CCB4CA93024393B19A46A3118E5CA7 }}
 
@@ -62,5 +34,5 @@ jobs:
         with:
           app-name: 'amaflix'
           slot-name: 'Production'
+          # 'package: .' tells the action to deploy everything from the root of your repo directly
           package: .
-          
